@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .header {
+            font-size: 24px;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .details {
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="header">Resource Allocation Notification</h1>
+        <p><strong>{{ resource.resource.name }}</strong> has been allocated for your request associated with the following incident:</p>
+        <p><strong>Incident:</strong> "{{ incident.title }}"</p>
+        
+        <div class="details">
+            <ul>
+                <li><strong>Quantity Allocated:</strong> {{ quantity }}</li>
+                <li><strong>Allocated By:</strong> {{ allocator.get_full_name }}</li>
+                <li><strong>Expected Return Date:</strong> {{ expected_return_date|date:"F j, Y" }}</li>
+            </ul>
+        </div>
+        
+        <p>For additional details, please visit your dashboard:</p>
+        <a href="{{ dashboard_url }}" class="button">View Resource Allocation</a>
+
+        <p class="footer">If you have questions, feel free to reach out to {{ allocator.get_full_name }}.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+Return Verification: {{ status }}
+
+Resource: {{ resource.resource.name }}
+Incident: "{{ resource.incident.title }}"
+
+Your return has been marked as {{ status }} by {{ verifier.get_full_name }}.
+
+Notes:
+{{ notes }}
+
+For more details, you may log into your account:
+{{ dashboard_url }}
+
+If you have questions, please reach out to {{ verifier.get_full_name }}.
+
+Thank you,
+Resource Management Team

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .header {
+            font-size: 24px;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .details {
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="header">Return Verification - {{ status }}</h1>
+        <p>Resource: <strong>{{ resource.resource.name }}</strong></p>
+        <p>Incident: "{{ resource.incident.title }}"</p>
+
+        <div class="details">
+            <p>Your return has been <strong>{{ status }}</strong> by {{ verifier.get_full_name }}.</p>
+            <p>Notes: {{ notes }}</p>
+        </div>
+        
+        <a href="{{ dashboard_url }}" class="button">View Details</a>
+
+        <p class="footer">For any questions, please contact {{ verifier.get_full_name }} directly.</p>
+    </div>
+</body>
+</html>

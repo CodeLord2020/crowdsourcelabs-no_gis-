@@ -1,0 +1,19 @@
+OVERDUE NOTICE: Resource Return
+
+Resource: {{ resource.resource.name }}
+Incident: "{{ incident.title }}"
+
+This resource was due to be returned {{ days_overdue }} days ago. 
+
+Details:
+- Quantity Allocated: {{ resource.quantity_allocated }}
+- Due Date: {{ resource.expected_return_date|date:"F j, Y" }}
+- Days Overdue: {{ days_overdue }}
+
+Please complete your return as soon as possible using the link below:
+{{ return_url }}
+
+If you have already returned this resource or need an extension, please contact {{ resource.allocated_by.get_full_name }}.
+
+Thank you,
+Resource Management Team

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333333;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #4CAF50;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #555555;
+        }
+        .task-details {
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .task-details h3 {
+            color: #333333;
+            font-size: 20px;
+            margin-top: 0;
+        }
+        .task-details p {
+            font-size: 15px;
+            margin: 5px 0;
+        }
+        .task-details ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .task-details ul li {
+            background-color: #e0f7fa;
+            color: #00796b;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .thank-you {
+            font-size: 16px;
+            color: #4CAF50;
+            text-align: center;
+            margin-top: 30px;
+            font-weight: bold;
+        }
+        .footer {
+            font-size: 14px;
+            color: #888888;
+            text-align: center;
+            margin-top: 20px;
+            border-top: 1px solid #eeeeee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>🎯 New Task Assignment</h2>
+    
+    <p>Hello {{ volunteer_name }} 👋,</p>
+    
+    <p>You've been assigned a new task for incident response!</p>
+    
+    <div class="task-details">
+        <h3>📋 Task Details</h3>
+        <p><strong>Title:</strong> {{ task_title }}</p>
+        <p><strong>Priority:</strong> {{ task_priority }}</p>
+        <p><strong>Incident:</strong> {{ incident_title }}</p>
+        <p><strong>Estimated Time:</strong> {{ estimated_time }}</p>
+        <p><strong>Due Date:</strong> {{ due_date }}</p>
+        
+        {% if skills_needed %}
+        <h4>Required Skills:</h4>
+        <ul>
+            {% for skill in skills_needed %}
+            <li>{{ skill }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    
+    <p class="thank-you">💪 Thank you for your dedication to helping others!</p>
+    
+    <div class="footer">
+        <p>Best regards,<br>
+        🌟 Your Community Response Team</p>
+    </div>
+</body>
+</html>
