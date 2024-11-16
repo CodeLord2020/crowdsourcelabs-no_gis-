@@ -6,12 +6,80 @@ from django.utils.translation import gettext_lazy as _
 from .managers import UserManager
 from typing import List
 import uuid
+from django.contrib.gis.db import models as gismodel
+from django.contrib.gis.geos import Point
+from django.core.validators import MinValueValidator, MaxValueValidator
+import logging
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from .mixins import LocationMixin
 from cloud_resource.models import ProfilePicResource
 from django.utils.crypto import get_random_string
 # Create your models here.
+logger = logging.getLogger(__name__)
+
+
+
+
+
+class UserLocation(gismodel.Model):
+    """Model to store user's current location"""
+    location = models.PointField(
+        srid=4326,  # Using WGS84 coordinate system (standard for GPS)
+        null=True,
+        blank=True,
+        help_text="Geographic location (longitude, latitude)"
+    )
+    location_accuracy = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Accuracy of location in meters"
+    )
+    location_updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text="Last time location was updated"
+    )
+    address = models.TextField(
+        blank=True,
+        help_text="Human-readable address"
+    )
+    device_info = models.JSONField(
+        default=dict,
+        help_text="Information about the device that reported location"
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['location_updated_at']),
+        ]
+        ordering = ['-location_updated_at']
+
+    def __str__(self):
+        coords = self.coordinates
+        if coords:
+            return f"Location at {coords[0]:.6f}, {coords[1]:.6f}"
+        return "Location not set"
+
+    def update_location(self, latitude, longitude, accuracy=None):
+        """Update location with new coordinates"""
+        try:
+            self.location = Point(float(longitude), float(latitude), srid=4326)
+            if accuracy is not None:
+                self.location_accuracy = accuracy
+            self.save()
+            logger.info(f"Location updated for user {self.user} to: {self.coordinates} with accuracy {accuracy}")
+            return True
+        except (ValueError, TypeError) as e:
+            logger.error(f"Location update failed for user {self.user}: {e}")
+            return False
+
+    @property
+    def coordinates(self):
+        """Return tuple of (latitude, longitude)"""
+        if self.location:
+            return (self.location.y, self.location.x)
+        return None
 
 
 
@@ -19,7 +87,9 @@ from django.utils.crypto import get_random_string
 class User(AbstractUser):
     """Base user model with enhanced fields and functionality"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    username = None  # Remove username field
+    username = models.CharField(max_length=100, null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
+    first_name = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(_('email address'), unique=True)
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
@@ -38,16 +108,21 @@ class User(AbstractUser):
         blank=True
     )
     bio = models.TextField(blank=True)
-    profile_picture = models.ForeignKey(ProfilePicResource, null=True, blank=True, on_delete=models.SET_NULL)
+    profile_picture = models.OneToOneField(ProfilePicResource, null=True, blank=True, on_delete=models.SET_NULL)
     last_active = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_verified = models.BooleanField(default=False)
     verification_token = models.UUIDField(default=uuid.uuid4, editable=False)
-    # location = models.PointField(null=True, blank=True)
-    # location = models.OneToOneField(UserLocation, null=True, blank=True,  on_delete=models.SET_NULL)
+    location = models.OneToOneField(
+        UserLocation,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='user'
+    )
     
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    REQUIRED_FIELDS = ['first_name', 'last_name', username]
     
     objects = UserManager()
     
@@ -64,12 +139,17 @@ class User(AbstractUser):
     
     @property
     def is_online(self) -> bool:
-        if self.last_active:
-            return (timezone.now() - self.last_active).seconds < 300
+        if self.last_login:
+            return (timezone.now() - self.last_login).seconds < 300
         return False
 
     def get_roles(self) -> List[str]:
-        return [role.role_type for role in self.user_roles.all()]
+        # return [role.role_type for role in self.user_roles.all()]
+        return list(
+            self.user_roles.filter(is_active=True)
+            .select_related('role')
+            .values_list('role__role_type', flat=True)
+        )
 
     def has_role(self, role_type: str) -> bool:
         return self.user_roles.filter(role__role_type=role_type).exists()
@@ -81,19 +161,24 @@ class User(AbstractUser):
         super().delete(*args, **kwargs)
 
 
-class UserLocation(LocationMixin):
-    """Model to track user location history"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name= 'user_locations')
-    device_info = models.JSONField(
-        default=dict,
-        help_text="Information about the device that reported location"
-    )
 
-    class Meta:
-        indexes = [
-            models.Index(fields=['location_updated_at']),
-        ]
-        ordering = ['-location_updated_at']
+
+
+
+
+# class UserLocation(LocationMixin):
+#     """Model to track user location history"""
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name= 'user_locations')
+#     device_info = models.JSONField(
+#         default=dict,
+#         help_text="Information about the device that reported location"
+#     )
+
+#     class Meta:
+#         indexes = [
+#             models.Index(fields=['location_updated_at']),
+#         ]
+#         ordering = ['-location_updated_at']
 
     # def latest_location(self):
     #     return self.user.locations.order_by('-location_updated_at').first()

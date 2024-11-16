@@ -395,8 +395,6 @@ class CreateCSRResourceMediaSerializer(serializers.ModelSerializer):
             "title",
             "file",
             "type",
-            'is_sensitive',
-            'caption',
             "size",
             "media_url",
             "cloud_id",

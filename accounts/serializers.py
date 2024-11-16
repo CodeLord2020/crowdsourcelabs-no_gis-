@@ -16,41 +16,82 @@ from django.contrib.auth.tokens import default_token_generator
 from datetime import timedelta
 from django.utils import timezone
 from cloud_resource.serializers import ProfilePicResourceSerializer
+from django.core.exceptions import ValidationError
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 
-class LocationSerializer(serializers.ModelSerializer):
-    latitude = serializers.FloatField(write_only=True)
-    longitude = serializers.FloatField(write_only=True)
-    coordinates = serializers.SerializerMethodField()
-    
+class UserLocationSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserLocation
-        fields = ['id', 'user', 'coordinates', 'latitude', 'longitude', 'location_accuracy', 
-                 'location_updated_at', 'address', 'device_info']
-        read_only_fields = ['location_updated_at']#, 'address']
+        fields = "__all__"
+
+class UserLocationSerializer(serializers.ModelSerializer):
+    latitude = serializers.FloatField(write_only=True, required=False)
+    longitude = serializers.FloatField(write_only=True, required=False)
+    coordinates = serializers.SerializerMethodField()
+    user_email = serializers.SerializerMethodField()
+    last_updated = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserLocation
+        fields = [
+            'id', 'coordinates', 'location_accuracy', 'location_updated_at',
+            'address', 'device_info', 'latitude', 'longitude', 'user_email',
+            'last_updated'
+        ]
+        read_only_fields = ['location_updated_at', 'coordinates']
+        extra_kwargs = {
+            'location_accuracy': {'required': False},
+            'device_info': {'required': False},
+            'address': {'required': False}
+        }
 
     def get_coordinates(self, obj):
-        if obj.coordinates:
-            return {'latitude': obj.coordinates[0], 'longitude': obj.coordinates[1]}
+        coords = obj.coordinates
+        if coords:
+            return {
+                'latitude': coords[0],
+                'longitude': coords[1],
+                'formatted': f"{coords[0]:.6f}, {coords[1]:.6f}"
+            }
         return None
-    
-    def validate(self, data):
-        lat = data.pop('latitude', None)
-        lon = data.pop('longitude', None)
 
-        if lat is not None and lon is not None:
+    def get_user_email(self, obj):
+        return obj.user.email if hasattr(obj, 'user') and obj.user else None
+
+    def get_last_updated(self, obj):
+        if obj.location_updated_at:
+            return {
+                'timestamp': obj.location_updated_at,
+                'humanized': timezone.template_localtime(obj.location_updated_at).strftime('%Y-%m-%d %H:%M:%S %Z'),
+                'age_minutes': (timezone.now() - obj.location_updated_at).total_seconds() / 60
+            }
+        return None
+
+    def validate(self, data):
+        latitude = data.pop('latitude', None)
+        longitude = data.pop('longitude', None)
+
+        if (latitude is not None and longitude is None) or (latitude is None and longitude is not None):
+            raise serializers.ValidationError("Both latitude and longitude must be provided together")
+
+        if latitude is not None and longitude is not None:
             try:
-                data['location'] = Point(float(lon), float(lat), srid=4326)
-                # Try to get address if not provided
-                if not data.get('address'):
-                    address = LocationService.get_address_from_coordinates(lat, lon)
-                    if address:
-                        data['address'] = address
-            except (ValueError, TypeError) as e:
-                raise serializers.ValidationError(f"Invalid coordinates: {e}")
-        
+                # Validate coordinate ranges
+                if not (-90 <= latitude <= 90):
+                    raise serializers.ValidationError("Latitude must be between -90 and 90 degrees")
+                if not (-180 <= longitude <= 180):
+                    raise serializers.ValidationError("Longitude must be between -180 and 180 degrees")
+                
+                data['location'] = Point(longitude, latitude, srid=4326)
+            except Exception as e:
+                raise serializers.ValidationError(f"Invalid coordinates: {str(e)}")
+
         return data
+
     
 
 
@@ -77,16 +118,17 @@ class UserRoleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     roles = UserRoleSerializer(source='userrole_set', many=True, read_only=True)
-    current_location = serializers.SerializerMethodField()
-    # profile_picture = ProfilePicResourceSerializer(required =False)
+    location = UserLocationSerializer(required=False)
+    profile_picture_data = ProfilePicResourceSerializer(required =False, read_only=True)
+    # volunteer = VolunteerSerializer(required =False)
 
     class Meta:
         model = User
         fields = [
-            'id', 'email', 'password', 'first_name', 'last_name',
+            'id', 'email', 'password', 'username', 'first_name', 'last_name',
             'phone_number', 'date_of_birth', 'emergency_contact',
-            'emergency_phone', 'current_location', 'bio', 'profile_picture', 'is_active',
-            'is_verified', 'roles', 'volunteer',
+            'emergency_phone', 'location', 'bio', 'profile_picture','profile_picture_data',
+            'is_active', 'is_verified', 'roles',
             'last_active', 'full_name', 'is_online'
         ]
         read_only_fields = ['is_active', 'is_verified', 'last_active', 'is_online']
@@ -95,37 +137,45 @@ class UserSerializer(serializers.ModelSerializer):
             'email': {'required': True}
         }
 
-    def get_current_location(self, obj):
 
-        latest_location = obj.user_locations.order_by('-location_updated_at').first()
-        if latest_location:
+    def get_location(self, obj):
+        """Get user's location information"""
+        if hasattr(obj, 'location') and obj.location:
+            location = obj.location
             return {
-                'latitude': latest_location.coordinates[0],  
-                'longitude': latest_location.coordinates[1],
-                'accuracy': latest_location.location_accuracy,  
-                'updated_at': latest_location.location_updated_at
+                'coordinates': location.coordinates,
+                'accuracy': location.location_accuracy,
+                'updated_at': location.location_updated_at,
+                'address': location.address,
+                'device_info': location.device_info
             }
-        elif not latest_location:
+        else:
+            # Try to get location from IP if no location exists
             request = self.context.get('request')
-            print("tried to get by IP")
             if request:
                 ip_address = request.META.get('REMOTE_ADDR')
                 coords = LocationService.get_coordinates_from_ip(ip_address)
                 if coords:
-                    print(f"got the cord {coords}")
-                    loc = UserLocation.objects.create(
-                        user=request.user,
+                    location = UserLocation.objects.create(
                         location=Point(coords['longitude'], coords['latitude']),
-                        location_accuracy=coords['accuracy'],
-                        device_info={'source': 'ip_geolocation', 'ip': ip_address}
+                        location_accuracy=coords.get('accuracy'),
+                        device_info={
+                            'source': 'ip_geolocation',
+                            'ip': ip_address,
+                            'timestamp': timezone.now().isoformat()
+                        }
                     )
+                    obj.location = location
+                    obj.save()
+                    
                     return {
-                        'latitude': coords['latitude'],  
-                        'longitude': coords['longitude'],
-                        'accuracy': ['accuracy'], 
-                    }           
-        else:
-            return None
+                        'coordinates': location.coordinates,
+                        'accuracy': location.location_accuracy,
+                        'updated_at': location.location_updated_at,
+                        'device_info': location.device_info
+                    }
+        return None
+
 
     def validate_password(self, value):
         try:
@@ -141,10 +191,29 @@ class UserSerializer(serializers.ModelSerializer):
             )
         
         if self.instance is None:  # Creation only
-            if not data.get('first_name') or not data.get('last_name'):
+            if not data.get('first_name') or not data.get('last_name') or not data.get('username'):
                 raise serializers.ValidationError(
                     "First name and last name are required"
                 )
+            
+        # Validate location data if provided
+        location_data = data.get('location')
+        if location_data:
+            if isinstance(location_data, dict):
+                if 'latitude' in location_data and 'longitude' in location_data:
+                    try:
+                        lat = float(location_data['latitude'])
+                        lng = float(location_data['longitude'])
+                        if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+                            raise serializers.ValidationError({
+                                'location': 'Invalid coordinates provided'
+                            })
+                    except (ValueError, TypeError):
+                        raise serializers.ValidationError({
+                            'location': 'Invalid coordinate format'
+                        })
+        
+        return data
         return data
     
     @transaction.atomic
@@ -160,7 +229,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
         if location_data:
-            UserLocation.objects.create(user=user, **location_data)
+            location = UserLocation.objects.create(**location_data)
+            user.location = location
+            user.save()      
         else:
             # Try to get location from IP
             request = self.context.get('request')
@@ -168,12 +239,18 @@ class UserSerializer(serializers.ModelSerializer):
                 ip_address = request.META.get('REMOTE_ADDR')
                 coords = LocationService.get_coordinates_from_ip(ip_address)
                 if coords:
-                    UserLocation.objects.create(
-                        user=user,
+                    location = UserLocation.objects.create(
                         location=Point(coords['longitude'], coords['latitude']),
-                        location_accuracy=coords['accuracy'],
-                        device_info={'source': 'ip_geolocation', 'ip': ip_address}
+                        location_accuracy=coords.get('accuracy'),
+                        device_info={
+                            'source': 'ip_geolocation',
+                            'ip': ip_address,
+                            'timestamp': timezone.now().isoformat()
+                        }
                     )
+                    user.location = location
+                    user.save()
+
 
         if volunteer_data:
             Volunteer.objects.create(user=user, **volunteer_data)
@@ -198,29 +275,34 @@ class UserSerializer(serializers.ModelSerializer):
         if password:
             instance.set_password(password)
 
+        # Update basic user fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        instance.save()
 
+        # Handle location update
+        if location_data:
+            if instance.location:
+                # Update existing location
+                location_serializer = UserLocationSerializer(
+                    instance.location,
+                    data=location_data,
+                    partial=True
+                )
+                if location_serializer.is_valid():
+                    location_serializer.save()
+            else:
+                # Create new location
+                location = UserLocation.objects.create(**location_data)
+                instance.location = location
+
+        # Handle volunteer data
         if volunteer_data and hasattr(instance, 'volunteer'):
             for attr, value in volunteer_data.items():
                 setattr(instance.volunteer, attr, value)
             instance.volunteer.save()
-        
-        if location_data:
-            location, _ = UserLocation.objects.get_or_create(user=instance)
-            location_serializer = LocationSerializer(
-                location,
-                data=location_data,
-                partial=True
-            )
-            if location_serializer.is_valid():
-                location_serializer.save()
 
         instance.save()
         return instance
-    
-
 
     # def create(self, validated_data):
     #     lat = validated_data.pop('latitude')

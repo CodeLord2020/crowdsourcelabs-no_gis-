@@ -12,6 +12,7 @@ class UserFilter(filters.FilterSet):
     email = filters.CharFilter(lookup_expr='iexact')
     first_name = filters.CharFilter(lookup_expr='icontains')
     last_name = filters.CharFilter(lookup_expr='icontains')
+    username = filters.CharFilter(lookup_expr='icontains')
     is_active = filters.BooleanFilter()
     is_verified = filters.BooleanFilter()
     

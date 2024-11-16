@@ -74,12 +74,12 @@ class UserAdmin(admin.ModelAdmin):
     """Admin configuration for User model."""
     list_display = ('full_name', 'email', 'is_active', 'is_verified', 'last_active', 'is_online')
     list_filter = ('is_active', 'is_verified')
-    search_fields = ('first_name', 'last_name', 'email')
+    search_fields = ('first_name', 'last_name', 'username', 'email')
     ordering = ('email',)
     readonly_fields = ('verification_token', 'last_active', 'is_online')
     fieldsets = (
         (None, {
-            'fields': ('email', 'first_name', 'last_name', 'password')
+            'fields': ('email', 'first_name', 'last_name', 'username','password')
         }),
         (_('Personal Info'), {
             'fields': ('phone_number', 'date_of_birth', 'bio', 'profile_picture', 'emergency_contact', 'emergency_phone')

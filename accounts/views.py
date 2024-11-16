@@ -1,11 +1,11 @@
 from django.shortcuts import render
 
 # Create your views here.
-from rest_framework import viewsets, status, filters, generics, mixins
+from rest_framework import viewsets, status, filters, generics, mixins, views
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import login, authenticate, logout
-from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly, AllowAny, BasePermission
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 from django.db.models import Avg, Count, Q
@@ -37,47 +37,187 @@ from .serializers import (
     UserRoleSerializer,
     UserSerializer,
     RoleSerializer,
-    LocationSerializer,
+    UserLocationSerializer,
+    UserLocationSimpleSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
     LoginSerializer,
     ChangePasswordSerializer,
 )
 
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+import logging
+logger = logging.getLogger(__name__)
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
 
+# class IsOwnerOrStaff(BasePermission):
+#     """Custom permission to only allow owners of an object to edit it"""
+    
+#     def has_object_permission(self, request, view, obj):
+#         if request.user.is_staff:
+#             return True
+            
+
+#         return obj.user == request.user
+    
+
+            
 class UserLocationViewSet(viewsets.ModelViewSet):
-    queryset = UserLocation.objects.all()
-    serializer_class = LocationSerializer
+    """
+    Advanced ViewSet for managing user locations.
+    
+    Supports:
+    - CRUD operations
+    - Filtering by date range and accuracy
+    - Custom actions for specific location updates
+    - Bulk operations
+    - Advanced querying capabilities
+    """
+    serializer_class = UserLocationSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['location_accuracy', 'location_updated_at']
+    search_fields = ['address']
+    ordering_fields = ['location_updated_at', 'location_accuracy']
+    ordering = ['-location_updated_at']
 
     def get_queryset(self):
-        return UserLocation.objects.filter(user=self.request.user)
-    
-    @action(detail=False, methods=['post'])
-    def update_from_ip(self, request):
-        ip_address = request.META.get('REMOTE_ADDR')
-        coords = LocationService.get_coordinates_from_ip(ip_address)
-        
-        if coords:
-            serializer = self.get_serializer(data={
-                'latitude': coords['latitude'],
-                'longitude': coords['longitude'],
-                'location_accuracy': coords['accuracy'],
-                'device_info': {'source': 'ip_geolocation', 'ip': ip_address}
-            })
+        """
+        Custom queryset that:
+        1. Filters by user if specified
+        2. Allows admin to see all locations
+        3. Supports date range filtering
+        """
+        queryset = UserLocation.objects.all()
 
-            serializer.is_valid(raise_exception=True)
-            serializer.save(user=request.user)
-            return Response(serializer.data)
-        return Response(
-            {"detail": "Could not determine location from IP"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        # Regular users can only see their own location
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(user=self.request.user)
+
+        # Date range filtering
+        start_date = self.request.query_params.get('start_date', None)
+        end_date = self.request.query_params.get('end_date', None)
+        
+        if start_date:
+            queryset = queryset.filter(location_updated_at__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(location_updated_at__lte=end_date)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        """Automatically associate the location with the current user"""
+        serializer.save()
+        logger.info(f"Location created for user {self.request.user}")
+
+    def perform_update(self, serializer):
+        """Handle updates with additional logging and validation"""
+        old_location = self.get_object()
+        instance = serializer.save()
+        
+        if old_location.coordinates != instance.coordinates:
+            logger.info(
+                f"Location updated for user {self.request.user}. "
+                f"Old: {old_location.coordinates}, New: {instance.coordinates}"
+            )
+
+    @action(detail=True, methods=['post'])
+    def quick_update(self, request, pk=None):
+        """
+        Quickly update location with minimal data
+        POST /api/locations/{pk}/quick_update/
+        """
+        location = self.get_object()
+        
+        try:
+            latitude = float(request.data.get('lat'))
+            longitude = float(request.data.get('lng'))
             
+            success = location.update_location(
+                latitude=latitude,
+                longitude=longitude,
+                accuracy=request.data.get('accuracy')
+            )
+            
+            if success:
+                return Response(self.get_serializer(location).data)
+            return Response(
+                {"error": "Failed to update location"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except (ValueError, TypeError) as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    # @action(detail=False, methods=['get'])
+    # def statistics(self, request):
+    #     """
+    #     Get location statistics for the user
+    #     GET /api/locations/statistics/
+    #     """
+    #     queryset = self.get_queryset()
+        
+    #     stats = {
+    #         'total_locations': queryset.count(),
+    #         'average_accuracy': queryset.exclude(
+    #             location_accuracy__isnull=True
+    #         ).aggregate(models.Avg('location_accuracy'))['location_accuracy__avg'],
+    #         'last_updated': queryset.first().location_updated_at if queryset.exists() else None,
+    #         'has_current_location': queryset.filter(
+    #             location_updated_at__gte=timezone.now() - timezone.timedelta(hours=1)
+    #         ).exists()
+    #     }
+        
+    #     return Response(stats)
+
+    @action(detail=False, methods=['post'])
+    def bulk_update(self, request):
+        """
+        Bulk update multiple location records
+        POST /api/locations/bulk_update/
+        """
+        locations = request.data.get('locations', [])
+        updated = []
+        errors = []
+
+        for loc_data in locations:
+            try:
+                location = UserLocation.objects.get(id=loc_data.get('id'))
+                serializer = self.get_serializer(
+                    location,
+                    data=loc_data,
+                    partial=True
+                )
+                
+                if serializer.is_valid():
+                    serializer.save()
+                    updated.append(serializer.data)
+                else:
+                    errors.append({
+                        'id': loc_data.get('id'),
+                        'errors': serializer.errors
+                    })
+            except UserLocation.DoesNotExist:
+                errors.append({
+                    'id': loc_data.get('id'),
+                    'errors': 'Location not found'
+                })
+            except Exception as e:
+                errors.append({
+                    'id': loc_data.get('id'),
+                    'errors': str(e)
+                })
+
+        return Response({
+            'updated': updated,
+            'errors': errors
+        })
     
 
 
@@ -214,13 +354,13 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def update_location(self, request, pk=None):
         user = self.get_object()
-        location_serializer = LocationSerializer(data=request.data)
+        location_serializer = UserLocationSerializer(data=request.data)
         if location_serializer.is_valid():
             location, _ = UserLocation.objects.get_or_create(user=user)
             for attr, value in location_serializer.validated_data.items():
                 setattr(location, attr, value)
             location.save()
-            return Response(LocationSerializer(location).data)
+            return Response(UserLocationSerializer(location).data)
         return Response(
             location_serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
@@ -536,6 +676,28 @@ class ChangePasswordView(generics.GenericAPIView, mixins.UpdateModelMixin):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class VerifyUserView(views.APIView):
+    """View to verify user via email token"""
+    permission_classes = [AllowAny]
+
+    def get(self, request, uid, token):
+        try:
+            # Decode the UID and fetch the user
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"detail": "Invalid UID or User does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the token is valid
+        if default_token_generator.check_token(user, token):
+            # Mark the user as verified
+            user.is_active = True  
+            user.is_verified = True
+            user.save()
+
+            return Response({"detail": "User successfully verified."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def verify_email(request, uid, token):
