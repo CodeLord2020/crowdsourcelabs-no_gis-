@@ -1,6 +1,6 @@
 from django.core.mail import send_mail
 from .models import User
-from cddp.settings import EMAIL_HOST_USER ,CLIENT_URL
+from cddp.settings import EMAIL_HOST_USER ,CLIENT_URL, ADMIN_EMAIL
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
@@ -8,11 +8,24 @@ from django.contrib.auth.tokens import default_token_generator
 
 
 def send_registration_email(email):
-    subject = "Crowdsourced Response Platform"
-    message = "Thank you for registering on our website. We're glad to have you!"
-    sender = EMAIL_HOST_USER
-    recipients = [email]
-    send_mail(subject=subject,message=message,from_email=sender,recipient_list=recipients,fail_silently=False)
+    user = User.objects.get(email=email)
+    subject = "Welcome to CDDP"
+    message = render_to_string(
+        'account-welcome.html', 
+        {
+            'user': user,  # Passing user details to the template
+            'support_email': ADMIN_EMAIL,  # Using the ADMIN_EMAIL from settings
+        }
+    )
+    send_mail(
+        subject=subject,
+        message=message,
+        from_email=EMAIL_HOST_USER,
+        recipient_list=[email],
+        fail_silently=False,
+        html_message=message,  
+    )
+
 
 
 
