@@ -52,7 +52,6 @@ class IncidentCategory(models.Model):
 
 
 
-
 class Incident(gis_models.Model):
     """Core model for tracking incidents and help requests"""
     STATUS_CHOICES = [
