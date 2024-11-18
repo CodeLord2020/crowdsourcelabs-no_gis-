@@ -86,7 +86,7 @@ MIDDLEWARE = [
 
 
 # GDAL_LIBRARY_PATH = os.path.join("/usr/local/opt/gdal/lib/libgdal.dylib")
-
+GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH', r'C:\OSGeo4W\bin\gdal309.dll')
 
 ROOT_URLCONF = "cddp.urls"
 CORS_ALLOW_ALL_ORIGINS = True
@@ -124,11 +124,15 @@ WSGI_APPLICATION = "cddp.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'cddp_db',
-        'USER': 'postgres',
-        'PASSWORD': 'baddest419',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        # 'ENGINE': 'django.db.backends.postgresql',  # Django's built-in PostgreSQL backend
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
+        'OPTIONS': {
+            'sslmode': config('DB_SSLMODE', default='require'),
+        },
     }
 }
 

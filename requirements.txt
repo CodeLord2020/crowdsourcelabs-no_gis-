@@ -6,7 +6,7 @@ click==8.1.7
 cloudinary==1.40.0
 decorator==5.1.1
 dj-database-url==2.3.0
-Django==5.1.2
+Django
 django-cloudinary-storage==0.3.0
 django-cors-headers==4.4.0
 django-filter==24.2
