@@ -1,21 +1,47 @@
 from django.contrib import admin
 from .models import Resources, BlogResource, ProfilePicResource, IncidentMediaResource, CSRResourceMedia, EventResources
 
+
+
+
+
+from django.contrib import admin
+from django.forms import ModelForm
+from django import forms
+from cloudinary.uploader import upload, destroy
+
+
+
+class ResourceForm(ModelForm):
+    file = forms.FileField(required=False, help_text="Upload a file to Cloudinary")
+
+    class Meta:
+        model = ProfilePicResource
+        fields = ["title", "type", "file"]  
+
+
 class ResourceAdminBase(admin.ModelAdmin):
-    """Base admin configuration for resource-related models."""
+    form = ResourceForm
+    list_display = ("title", "type", "size", "media_url", "created_at")
+    readonly_fields = ("size", "media_url", "cloud_id", "created_at", "updated_at")
 
-    list_display = ('title', 'type', 'size', 'created_at', 'updated_at', 'cloud_id')
-    search_fields = ('title', 'type', 'cloud_id')
-    list_filter = ('type', 'created_at')
-    ordering = ('-created_at',)
-    readonly_fields = ('created_at', 'updated_at', 'cloud_id')
+    def save_model(self, request, obj, form, change):
+        # If a new file is uploaded, handle the Cloudinary logic
+        file = form.cleaned_data.get("file")
+        if file:
+            if obj.pk and obj.cloud_id:  # If updating, delete the old Cloudinary resource
+                destroy(public_id=obj.cloud_id, resource_type="raw")
 
-    # Custom method to format size in KB
-    def formatted_size(self, obj):
-        if obj.size:
-            return f"{obj.size / 1024:.2f} KB"
-        return "N/A"
-    formatted_size.short_description = 'Size (KB)'
+            # Upload the new file to Cloudinary
+            upload_result = upload(file, resource_type="raw")
+            obj.media_url = upload_result["url"]
+            obj.cloud_id = upload_result["public_id"]
+            obj.size = upload_result["bytes"]
+
+        super().save_model(request, obj, form, change)
+
+
+
 
 @admin.register(Resources)
 class ResourcesAdmin(ResourceAdminBase):

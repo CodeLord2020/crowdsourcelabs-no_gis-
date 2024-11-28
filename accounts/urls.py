@@ -10,9 +10,9 @@ from .views import UserLocationViewSet, UserViewSet, UserRoleViewSet, RoleViewSe
 
 
 router = DefaultRouter()
-router.register(r'user-role', UserViewSet, basename='user_role'),
+router.register(r'user-role', UserRoleViewSet, basename='user_role'),
 router.register(r'user_location', UserLocationViewSet, basename='user_location'),
-router.register(r'role', UserViewSet, basename='role'),
+router.register(r'role', RoleViewSet, basename='role'),
 router.register(r'auth', UserViewSet, basename='user'),
 
 
