@@ -18,21 +18,18 @@ RESOURCE_TYPES = (
 MAXIMUM_SIZE_UPLOAD = 3 * 1024 * 1024 #3mb
 
 
-class ResourcesSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Resources
-        fields = "__all__"
-
-
-class CreateResourcesSerializer(serializers.ModelSerializer):
+class BaseResourceSerializer(serializers.ModelSerializer):
     file = serializers.FileField(required=True, write_only=True)
     title = serializers.CharField(required=True)
-    type = serializers.ChoiceField(RESOURCE_TYPES, required=True)
-
+    type = serializers.ChoiceField(choices=(
+        ("AUDIO", "AUDIO"),
+        ("VIDEO", "VIDEO"),
+        ("IMAGE", "IMAGE"),
+        ("DOCUMENT", "DOCUMENT"),
+        ("OTHERS", "OTHERS"),
+    ), required=True)
 
     class Meta:
-        model = Resources
         fields = [
             "id",
             "title",
@@ -46,47 +43,69 @@ class CreateResourcesSerializer(serializers.ModelSerializer):
 
     def validate_file(self, value):
         if value.size > MAXIMUM_SIZE_UPLOAD:
-            raise ValidationError("File size must not be more than 2MB")
+            raise ValidationError("File size must not exceed 3MB")
         return value
 
+    def upload_to_cloudinary(self, file):
+        return cloudinary.uploader.upload(file, resource_type='raw')
+
     def create(self, validated_data):
-        file = validated_data.pop('file')  # Extract 'file' from validated_data
+        file = validated_data.pop('file')
+        upload_result = self.upload_to_cloudinary(file)
 
-        # Upload the file to Cloudinary or your desired storage
-        upload_result = cloudinary.uploader.upload(file, resource_type='raw')
-
-        # Create a new Resources instance with the other fields
-        instance = Resources.objects.create(
+        # Create a new instance with the uploaded data
+        instance = self.Meta.model.objects.create(
             media_url=upload_result["url"],
             cloud_id=upload_result["public_id"],
             size=upload_result["bytes"],
             **validated_data,
         )
-
         return instance
 
     def update(self, instance, validated_data):
-        file = validated_data.pop('file', None)  # Extract 'file' from validated_data
-
+        file = validated_data.pop('file', None)
         if file:
-            # Delete the old file in Cloudinary
+            # Delete old Cloudinary resource
             cloudinary.uploader.destroy(public_id=instance.cloud_id, resource_type='raw')
 
-            # Upload the new file to Cloudinary or your desired storage
-            upload_result = cloudinary.uploader.upload(file, resource_type='raw')
-
-            # Update the media_url and cloud_id with the new values
+            # Upload new file
+            upload_result = self.upload_to_cloudinary(file)
             instance.media_url = upload_result["url"]
             instance.cloud_id = upload_result["public_id"]
             instance.size = upload_result["bytes"]
 
-        # Update other fields as needed
+        # Update other fields
         instance.title = validated_data.get('title', instance.title)
         instance.type = validated_data.get('type', instance.type)
         instance.save()
         return instance
+
+
+
+class CreateResourcesSerializer(BaseResourceSerializer):
+    class Meta(BaseResourceSerializer.Meta):
+        model = Resources
+
+class ResourcesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resources
+        fields = "__all__"
+
+
+class CreateProfilePicResourceSerializer(BaseResourceSerializer):
+    class Meta(BaseResourceSerializer.Meta):
+        model = ProfilePicResource
     
-    
+class ProfilePicResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfilePicResource
+        fields = "__all__"
+
+
+class CreateBlogResourceSerializer(BaseResourceSerializer):
+    class Meta(BaseResourceSerializer.Meta):
+        model = BlogResource
+
 class BlogResourceSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -94,136 +113,8 @@ class BlogResourceSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CreateBlogResourceSerializer(serializers.ModelSerializer):
-    file = serializers.FileField(required=True, write_only=True)
-    title = serializers.CharField(required=True)
-    type = serializers.ChoiceField(RESOURCE_TYPES, required=True)
 
 
-    class Meta:
-        model = BlogResource
-        fields = [
-            "id",
-            "title",
-            "file",
-            "type",
-            "size",
-            "media_url",
-            "cloud_id",
-        ]
-        read_only_fields = ["id", "media_url", "cloud_id", "size"]
-
-    def validate_file(self, value):
-        if value.size > MAXIMUM_SIZE_UPLOAD:
-            raise ValidationError("File size must not be more than 2MB")
-        return value
-
-    def create(self, validated_data):
-        file = validated_data.pop('file')  # Extract 'file' from validated_data
-
-        # Upload the file to Cloudinary or your desired storage
-        upload_result = cloudinary.uploader.upload(file, resource_type='raw')
-
-        # Create a new Resources instance with the other fields
-        instance = BlogResource.objects.create(
-            media_url=upload_result["url"],
-            cloud_id=upload_result["public_id"],
-            size=upload_result["bytes"],
-            **validated_data,
-        )
-
-        return instance
-
-    def update(self, instance, validated_data):
-        file = validated_data.pop('file', None)  # Extract 'file' from validated_data
-
-        if file:
-            # Delete the old file in Cloudinary
-            cloudinary.uploader.destroy(public_id=instance.cloud_id, resource_type='raw')
-
-            # Upload the new file to Cloudinary or your desired storage
-            upload_result = cloudinary.uploader.upload(file, resource_type='raw')
-
-            # Update the media_url and cloud_id with the new values
-            instance.media_url = upload_result["url"]
-            instance.cloud_id = upload_result["public_id"]
-            instance.size = upload_result["bytes"]
-
-        # Update other fields as needed
-        instance.title = validated_data.get('title', instance.title)
-        instance.type = validated_data.get('type', instance.type)
-        instance.save()
-        return instance
-    
-    
-class ProfilePicResourceSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ProfilePicResource
-        fields = "__all__"
-
-
-class CreateProfilePicResourceSerializer(serializers.ModelSerializer):
-    file = serializers.FileField(required=True, write_only=True)
-    title = serializers.CharField(required=True)
-    type = serializers.ChoiceField(RESOURCE_TYPES, required=True)
-
-
-    class Meta:
-        model = ProfilePicResource
-        fields = [
-            "id",
-            "title",
-            "file",
-            "type",
-            "size",
-            "media_url",
-            "cloud_id",
-        ]
-        read_only_fields = ["id", "media_url", "cloud_id", "size"]
-
-    def validate_file(self, value):
-        if value.size > MAXIMUM_SIZE_UPLOAD:
-            raise ValidationError("File size must not be more than 2MB")
-        return value
-
-    def create(self, validated_data):
-        file = validated_data.pop('file')  # Extract 'file' from validated_data
-
-        # Upload the file to Cloudinary or your desired storage
-        upload_result = cloudinary.uploader.upload(file, resource_type='raw')
-
-        # Create a new Resources instance with the other fields
-        instance = ProfilePicResource.objects.create(
-            media_url=upload_result["url"],
-            cloud_id=upload_result["public_id"],
-            size=upload_result["bytes"],
-            **validated_data,
-        )
-
-        return instance
-
-    def update(self, instance, validated_data):
-        file = validated_data.pop('file', None)  # Extract 'file' from validated_data
-
-        if file:
-            # Delete the old file in Cloudinary
-            cloudinary.uploader.destroy(public_id=instance.cloud_id, resource_type='raw')
-
-            # Upload the new file to Cloudinary or your desired storage
-            upload_result = cloudinary.uploader.upload(file, resource_type='raw')
-
-            # Update the media_url and cloud_id with the new values
-            instance.media_url = upload_result["url"]
-            instance.cloud_id = upload_result["public_id"]
-            instance.size = upload_result["bytes"]
-
-        # Update other fields as needed
-        instance.title = validated_data.get('title', instance.title)
-        instance.type = validated_data.get('type', instance.type)
-        instance.save()
-        return instance
-    
 
 
 
@@ -375,70 +266,14 @@ class CreateEventResourcesSerializer(serializers.ModelSerializer):
 
 
 
-class CSRResourceMediaSerializer(serializers.ModelSerializer):
 
+
+class CreateCSRResourceMediaSerializer(BaseResourceSerializer):
+    class Meta(BaseResourceSerializer.Meta):
+        model = CSRResourceMedia
+        
+
+class CSRResourceMediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = CSRResourceMedia
         fields = "__all__"
-
-
-class CreateCSRResourceMediaSerializer(serializers.ModelSerializer):
-    file = serializers.FileField(required=True, write_only=True)
-    title = serializers.CharField(required=True)
-    type = serializers.ChoiceField(RESOURCE_TYPES, required=True)
-
-
-    class Meta:
-        model = CSRResourceMedia
-        fields = [
-            "id",
-            "title",
-            "file",
-            "type",
-            "size",
-            "media_url",
-            "cloud_id",
-        ]
-        read_only_fields = ["id", "media_url", "cloud_id", "size"]
-
-    def validate_file(self, value):
-        if value.size > MAXIMUM_SIZE_UPLOAD:
-            raise ValidationError("File size must not be more than 2MB")
-        return value
-
-    def create(self, validated_data):
-        file = validated_data.pop('file')  # Extract 'file' from validated_data
-
-        # Upload the file to Cloudinary or your desired storage
-        upload_result = cloudinary.uploader.upload(file, resource_type='raw')
-
-        # Create a new Resources instance with the other fields
-        instance = CSRResourceMedia.objects.create(
-            media_url=upload_result["url"],
-            cloud_id=upload_result["public_id"],
-            size=upload_result["bytes"],
-            **validated_data,
-        )
-
-        return instance
-
-    def update(self, instance, validated_data):
-        file = validated_data.pop('file', None)  # Extract 'file' from validated_data
-
-        if file:
-            # Delete the old file in Cloudinary
-            cloudinary.uploader.destroy(public_id=instance.cloud_id, resource_type='raw')
-
-            # Upload the new file to Cloudinary or your desired storage
-            upload_result = cloudinary.uploader.upload(file, resource_type='raw')
-
-            # Update the media_url and cloud_id with the new values
-            instance.media_url = upload_result["url"]
-            instance.cloud_id = upload_result["public_id"]
-            instance.size = upload_result["bytes"]
-
-        # Update other fields as needed
-        instance.title = validated_data.get('title', instance.title)
-        instance.type = validated_data.get('type', instance.type)
-        instance.save()
-        return instance
