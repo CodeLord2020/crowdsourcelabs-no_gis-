@@ -30,7 +30,7 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['crowdsourcelab.onrender.com' , 'localhost' , '127.0.0.1']
 AUTH_USER_MODEL = "accounts.User"
 GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
 FRONTEND_URL = config("FRONTEND_URL")
