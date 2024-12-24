@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: crowdsourcelab
+    env: python
+    buildCommand: ./build.sh
+    startCommand: gunicorn cddp.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+    buildFilter:
+      paths:
+        - requirements.txt
+    plan: free
