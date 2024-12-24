@@ -13,8 +13,8 @@ from accounts.permissions import (
 )
 from .filters import SkillFilterSet, VolunteerSkillFilterSet, VolunteerFilter
 from django.db.models import Avg, Count, Q,F
-from django.contrib.gis.geos import Point
-from .services import VolunteerLocationService
+# from django.contrib.gis.geos import Point
+# from .services import VolunteerLocationService
 from .models import (
     Volunteer,
     VolunteerSkill,
@@ -254,35 +254,37 @@ class VolunteerViewSet(viewsets.ModelViewSet):
     )
     @action(detail=False, methods=['GET'])
     def find_nearby(self, request):
-        try:
-            latitude = float(request.query_params.get('latitude'))
-            longitude = float(request.query_params.get('longitude'))
-            radius = float(request.query_params.get('radius', 10.0))
-            point = Point(longitude, latitude, srid=4326)
-            
-            queryset = self.get_queryset().filter(
-                is_available=True,
-                preferred_location__distance_lte=(point, D(km=radius))
-            ).annotate(
-                distance=Distance('preferred_location', point)
-            )
 
-            skills_required = request.query_params.get('skills_required')
-            if skills_required:
-                skill_ids = [int(id) for id in skills_required.split(',')]
-                queryset = queryset.filter(skills__id__in=skill_ids)
+        pass
+        # try:
+        #     latitude = float(request.query_params.get('latitude'))
+        #     longitude = float(request.query_params.get('longitude'))
+        #     radius = float(request.query_params.get('radius', 10.0))
+        #     point = Point(longitude, latitude, srid=4326)
+            
+        #     queryset = self.get_queryset().filter(
+        #         is_available=True,
+        #         preferred_location__distance_lte=(point, D(km=radius))
+        #     ).annotate(
+        #         distance=Distance('preferred_location', point)
+        #     )
 
-            queryset = queryset.order_by('distance')
+        #     skills_required = request.query_params.get('skills_required')
+        #     if skills_required:
+        #         skill_ids = [int(id) for id in skills_required.split(',')]
+        #         queryset = queryset.filter(skills__id__in=skill_ids)
+
+        #     queryset = queryset.order_by('distance')
             
-            page = self.paginate_queryset(queryset)
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        #     page = self.paginate_queryset(queryset)
+        #     serializer = self.get_serializer(page, many=True)
+        #     return self.get_paginated_response(serializer.data)
             
-        except (ValueError, TypeError):
-            return Response(
-                {'error': 'Invalid parameters provided'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # except (ValueError, TypeError):
+        #     return Response(
+        #         {'error': 'Invalid parameters provided'},
+        #         status=status.HTTP_400_BAD_REQUEST
+        #     )
    
 
 

@@ -1,4 +1,4 @@
-from django.contrib.gis.measure import D
+# from django.contrib.gis.measure import D
 from django.db.models import F, ExpressionWrapper, DurationField
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -51,13 +51,13 @@ class DashboardIncidentFilter(filters.FilterSet):
             )
         ).filter(response_time__gt=timedelta(minutes=value))
 
-    def filter_by_distance(self, queryset, name, value):
-        user_location = self.request.user.get_location()
-        if user_location:
-            return queryset.filter(
-                location__distance_lte=(user_location, D(km=value))
-            )
-        return queryset
+    # def filter_by_distance(self, queryset, name, value):
+    #     user_location = self.request.user.get_location()
+    #     if user_location:
+    #         return queryset.filter(
+    #             location__distance_lte=(user_location, D(km=value))
+    #         )
+    #     return queryset
 
     class Meta:
         model = Incident

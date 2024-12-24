@@ -1,10 +1,10 @@
 from django.contrib import admin
-from django.contrib.gis.admin import GISModelAdmin
+# from django.contrib.gis.admin import GISModelAdmin
 from .models import Volunteer, Skill, VolunteerSkill
 
 
 @admin.register(Volunteer)
-class VolunteerAdmin(GISModelAdmin):  # Using GIS admin for map support on preferred_location
+class VolunteerAdmin(admin.ModelAdmin):  # Using GIS admin for map support on preferred_location
     list_display = ('user', 'experience_level', 'verified_hours', 'rating', 'is_available')
     list_filter = ('experience_level', 'is_available')
     search_fields = ('user__email', 'user__first_name', 'user__last_name')

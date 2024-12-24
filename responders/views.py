@@ -10,9 +10,9 @@ from accounts.permissions import (
 )
 from datetime import timedelta
 from django.utils import timezone
-from django.contrib.gis.geos import Point
-from django.contrib.gis.measure import D
-from django.contrib.gis.db.models.functions import Distance
+# from django.contrib.gis.geos import Point
+# from django.contrib.gis.measure import D
+# from django.contrib.gis.db.models.functions import Distance
 from .models import (
     Responder,
 )
@@ -47,13 +47,13 @@ class ResponderViewSet(viewsets.ModelViewSet):
             lat = self.request.query_params.get('latitude')
             lon = self.request.query_params.get('longitude')
 
-            if lat and lon:
-                point = Point(float(lon), float(lat), srid=4326)
-                queryset = queryset.filter(
-                    user__location__location__distance_lte=(point, D(km=10))
-                ).annotate(
-                    distance=Distance('user__location__location', point)
-                ).order_by('distance')
+            # if lat and lon:
+            #     point = Point(float(lon), float(lat), srid=4326)
+            #     queryset = queryset.filter(
+            #         user__location__location__distance_lte=(point, D(km=10))
+            #     ).annotate(
+            #         distance=Distance('user__location__location', point)
+            #     ).order_by('distance')
             
              # Specialization filtering
             specializations = self.request.query_params.getlist('specializations')

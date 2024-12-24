@@ -24,7 +24,7 @@ from cddp.tasks import(send_return_submission_notification, send_return_verifica
                        send_responder_assignment_notification)
 from django.urls import reverse
 from responders.models import Responder
-from django.contrib.gis.measure import D
+# from django.contrib.gis.measure import D
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
@@ -386,44 +386,45 @@ class IncidentViewSet(viewsets.ModelViewSet):
     )
     @action(detail=True, methods=['GET'])
     def nearest_volunteers(self, request, pk=None):
-        """
-        Find volunteers within a specified radius of the incident.
-        Query params:
-        - radius: search radius in kilometers (default: 5)
-        - limit: maximum number of volunteers to return (default: 10)
-        """
-        incident = self.get_object()
-        radius_km = float(request.query_params.get('radius', 5))
-        limit = int(request.query_params.get('limit', 10))
+        pass
+        # """
+        # Find volunteers within a specified radius of the incident.
+        # Query params:
+        # - radius: search radius in kilometers (default: 5)
+        # - limit: maximum number of volunteers to return (default: 10)
+        # """
+        # incident = self.get_object()
+        # radius_km = float(request.query_params.get('radius', 5))
+        # limit = int(request.query_params.get('limit', 10))
 
-        volunteers = (
-            Volunteer.objects
-            .select_related('user__location')
-            .filter(
-                user__location__location__isnull=False,
-                user__location__location__distance_lte=(
-                    incident.location,
-                    D(km=radius_km)
-                )
-            )
-            .annotate(
-                distance=Distance('user__location__location', incident.location)
-            )
-            .order_by('distance')[:limit]
-        )
+        # volunteers = (
+        #     Volunteer.objects
+        #     .select_related('user__location')
+        #     .filter(
+        #         user__location__location__isnull=False,
+        #         user__location__location__distance_lte=(
+        #             incident.location,
 
-        volunteer_data = [{
-            'id': volunteer.user.id,
-            'distance_km': volunteer.distance.km,
-            'location_updated_at': volunteer.user.location.location_updated_at,
-            'address': volunteer.user.location.address
-        } for volunteer in volunteers]
+        #         )
+        #     )
+        #     .annotate(
+        #         distance=Distance('user__location__location', incident.location)
+        #     )
+        #     .order_by('distance')[:limit]
+        # )
 
-        return Response({
-            'count': len(volunteer_data),
-            'radius_km': radius_km,
-            'volunteers': volunteer_data
-        })
+        # volunteer_data = [{
+        #     'id': volunteer.user.id,
+        #     'distance_km': volunteer.distance.km,
+        #     'location_updated_at': volunteer.user.location.location_updated_at,
+        #     'address': volunteer.user.location.address
+        # } for volunteer in volunteers]
+
+        # return Response({
+        #     'count': len(volunteer_data),
+        #     'radius_km': radius_km,
+        #     'volunteers': volunteer_data
+        # })
 
     @extend_schema(
         parameters=[
@@ -447,42 +448,43 @@ class IncidentViewSet(viewsets.ModelViewSet):
     )
     @action(detail=True, methods=['get'])
     def nearest_responders(self, request, pk=None):
-        """
-        Find emergency responders within a specified radius of the incident.
-        Returns responders ordered by distance.
-        """
-        incident = self.get_object()
-        radius_km = float(request.query_params.get('radius', 10))  # Default 10km
-        limit = int(request.query_params.get('limit', 10))  # Default 10 results
+        pass
+        # """
+        # Find emergency responders within a specified radius of the incident.
+        # Returns responders ordered by distance.
+        # """
+        # incident = self.get_object()
+        # radius_km = float(request.query_params.get('radius', 10))  # Default 10km
+        # limit = int(request.query_params.get('limit', 10))  # Default 10 results
 
-        responders = (
-            Responder.objects
-            .select_related('user__location')
-            .filter(
-                user__location__location__isnull=False,
-                user__location__location__distance_lte=(
-                    incident.location,
-                    D(km=radius_km)
-                )
-            )
-            .annotate(
-                distance=Distance('user__location__location', incident.location)
-            )
-            .order_by('distance')[:limit]
-        )
+        # responders = (
+        #     Responder.objects
+        #     .select_related('user__location')
+        #     .filter(
+        #         user__location__location__isnull=False,
+        #         user__location__location__distance_lte=(
+        #             incident.location,
+        #             D(km=radius_km)
+        #         )
+        #     )
+        #     .annotate(
+        #         distance=Distance('user__location__location', incident.location)
+        #     )
+        #     .order_by('distance')[:limit]
+        # )
 
-        responder_data = [{
-            'id': responder.user.id,
-            'distance_km': responder.distance.km,
-            'location_updated_at': responder.user.location.location_updated_at,
-            'address': responder.user.location.address
-        } for responder in responders]
+        # responder_data = [{
+        #     'id': responder.user.id,
+        #     'distance_km': responder.distance.km,
+        #     'location_updated_at': responder.user.location.location_updated_at,
+        #     'address': responder.user.location.address
+        # } for responder in responders]
 
-        return Response({
-            'count': len(responder_data),
-            'radius_km': radius_km,
-            'responders': responder_data
-        })
+        # return Response({
+        #     'count': len(responder_data),
+        #     'radius_km': radius_km,
+        #     'responders': responder_data
+        # })
     
 
 

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.contrib.gis.geos import Point
+# from django.contrib.gis.geos import Point
 from .models import ResourceTag, ResourceType, Resource, ResourceDonation
 from accounts.models import User
 
@@ -27,7 +27,7 @@ class ResourceSerializer(serializers.ModelSerializer):
     manager = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), source='manager'
     )
-    location = serializers.SerializerMethodField()
+    # location = serializers.SerializerMethodField()
     tags = ResourceTagSerializer(many=True, read_only=True)
 
     class Meta:
@@ -36,18 +36,18 @@ class ResourceSerializer(serializers.ModelSerializer):
             'id', 'name', 'resource_type', 'resource_type_id', 'description',
             'minimum_quantity', 'reorder_point', 'quantity_available',
             'quantity_allocated', 'quantity_available_for_allocation',
-            'needs_reorder', 'media', 'unit', 'expiry_date', 'location',
+            'needs_reorder', 'media', 'unit', 'expiry_date',
             'owner', 'manager', 'is_consumable', 'is_perishable',
             'is_sharable', 'cost_per_unit', 'tags'
         )
 
-    def get_location(self, obj):
-        if obj.location:
-            return {
-                'latitude': obj.location.y,
-                'longitude': obj.location.x
-            }
-        return {}
+    # def get_location(self, obj):
+    #     if obj.location:
+    #         return {
+    #             'latitude': obj.location.y,
+    #             'longitude': obj.location.x
+    #         }
+    #     return {}
     
 
 class ResourceDonationSerializer(serializers.ModelSerializer):

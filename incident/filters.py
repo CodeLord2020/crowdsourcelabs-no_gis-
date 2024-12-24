@@ -1,7 +1,7 @@
 import django_filters
 from django.db.models import Q, F, ExpressionWrapper, FloatField
-from django.contrib.gis.measure import D
-from django.contrib.gis.db.models.functions import Distance
+# from django.contrib.gis.measure import D
+# from django.contrib.gis.db.models.functions import Distance
 from .models import (
     Task, IncidentAssignment, IncidentVolunteer, 
     IncidentResource, Incident, IncidentCategory
@@ -125,15 +125,15 @@ class IncidentVolunteerFilter(django_filters.FilterSet):
         if not self.request or not self.request.user.volunteer.preferred_location:
             return queryset
         
-        user_location = self.request.user.volunteer.preferred_location
-        return queryset.filter(
-            incident__location__distance_lte=(
-                user_location,
-                D(km=value)
-            )
-        ).annotate(
-            distance=Distance('incident__location', user_location)
-        ).order_by('distance')
+        # user_location = self.request.user.volunteer.preferred_location
+        # return queryset.filter(
+        #     incident__location__distance_lte=(
+        #         user_location,
+        #         D(km=value)
+        #     )
+        # ).annotate(
+        #     distance=Distance('incident__location', user_location)
+        # ).order_by('distance')
 
     def filter_skill_match(self, queryset, name, value):
         if not value:

@@ -3,7 +3,7 @@ from accounts.serializers import UserSerializer
 from .models import Skill, Volunteer, VolunteerRating, VolunteerSkill
 from django.utils import timezone
 from django.db import transaction
-from django.contrib.gis.geos import Point
+# from django.contrib.gis.geos import Point
 from django.db.models import Avg, Count
 
 

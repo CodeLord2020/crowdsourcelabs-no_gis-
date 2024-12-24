@@ -1,6 +1,6 @@
 from django.db import models
-from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.geos import Point
+# from django.contrib.gis.db import models as gis_models
+# from django.contrib.gis.geos import Point
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from typing import List, Dict, Any
@@ -45,7 +45,7 @@ class Resource(models.Model):
     media = models.ManyToManyField(CSRResourceMedia, blank= True, related_name="resources_media")
     unit = models.CharField(max_length=50)
     expiry_date = models.DateField(null=True, blank=True)
-    location = gis_models.PointField(null=True, blank=True)
+    # location = gis_models.PointField(null=True, blank=True)
     owner = models.ForeignKey(
         User,
         null=True,
