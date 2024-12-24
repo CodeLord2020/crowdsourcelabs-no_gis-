@@ -86,7 +86,11 @@ MIDDLEWARE = [
 
 
 # GDAL_LIBRARY_PATH = os.path.join("/usr/local/opt/gdal/lib/libgdal.dylib")
-# GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH', r'C:\OSGeo4W\bin\gdal309.dll')
+GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH', r'C:\OSGeo4W\bin\gdal309.dll')
+
+
+if os.environ.get('RENDER'):  
+    GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
 
 ROOT_URLCONF = "cddp.urls"
 CORS_ALLOW_ALL_ORIGINS = True
