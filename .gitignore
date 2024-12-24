@@ -1,2 +1,4 @@
 .env
 migrations/
+render.yaml
+build.sh
