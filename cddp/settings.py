@@ -127,22 +127,30 @@ WSGI_APPLICATION = "cddp.wsgi.application"
 #         "ENGINE": "django.db.backends.sqlite3",
 #         "NAME": BASE_DIR / "db.sqlite3",
 #     }
+
 # }
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        # 'ENGINE': 'django.db.backends.postgresql',  # Django's built-in PostgreSQL backend
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
-        'OPTIONS': {
-            'sslmode': config('DB_SSLMODE', default='require'),
-        },
+        'ENGINE': 'django.db.backends.sqlite3',  # or any other backend
+        'NAME': BASE_DIR / "db_without_gis.sqlite3",
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         # 'ENGINE': 'django.db.backends.postgresql',  # Django's built-in PostgreSQL backend
+#         'NAME': config('DB_NAME'),
+#         'USER': config('DB_USER'),
+#         'PASSWORD': config('DB_PASSWORD'),
+#         'HOST': config('DB_HOST'),
+#         'PORT': config('DB_PORT'),
+#         'OPTIONS': {
+#             'sslmode': config('DB_SSLMODE', default='require'),
+#         },
+#     }
+# }
 
 # Celery Configuration
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
