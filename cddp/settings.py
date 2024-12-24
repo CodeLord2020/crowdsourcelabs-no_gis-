@@ -90,7 +90,7 @@ import os
 
 # Specify GDAL library paths for Render environment
 if os.getenv("RENDER"):
-    GDAL_LIBRARY_PATH = "/usr/lib/libgdal.so.30"
+    GDAL_LIBRARY_PATH = None#"/usr/lib/libgdal.so.30"
     GDAL_VERSION = (3, 6, 2)  # Update to the correct GDAL version if needed
 else:
     GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH', r'C:\OSGeo4W\bin\gdal309.dll')
