@@ -5,14 +5,11 @@ from rest_framework import viewsets, status, filters, generics, mixins, views
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import login, authenticate, logout
-from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly, AllowAny, BasePermission
-from django.contrib.gis.geos import Point
-from django.contrib.gis.measure import D
+from rest_framework.permissions import IsAuthenticated, AllowAny
+
 from django.db.models import Avg, Count, Q
 from .filters import UserRoleFilter, RoleFilter, UserFilter
-from .services import LocationService
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.gis.db.models.functions import Distance
 from rest_framework.exceptions import APIException
 from .utils import send_verification_email, send_password_reset_email
 from rest_framework.request import Request
@@ -22,7 +19,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from drf_spectacular.types import OpenApiTypes
 from .permissions import (
     AdminPermission, 
