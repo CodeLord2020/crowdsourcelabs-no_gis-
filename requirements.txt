@@ -45,7 +45,7 @@ maxminddb==2.6.2
 GDAL==3.6.2
 numpy>=1.26.0
 
-mkl-service==2.4.0
+mkl-service
 # mkl_fft @ file:///C:/Users/dev-admin/mkl/mkl_fft_1730823082242/work
 # mkl_random @ file:///C:/Users/dev-admin/mkl/mkl_random_1730822522280/work
 multidict==6.1.0
