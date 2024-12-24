@@ -6,13 +6,11 @@ from django.utils.translation import gettext_lazy as _
 from .managers import UserManager
 from typing import List
 import uuid
-from django.contrib.gis.db import models as gismodel
-from django.contrib.gis.geos import Point
+from typing import List, Tuple, Optional
 from django.core.validators import MinValueValidator, MaxValueValidator
 import logging
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
-from .mixins import LocationMixin
 from cloud_resource.models import ProfilePicResource
 from django.utils.crypto import get_random_string
 # Create your models here.
@@ -21,14 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 
-
-class UserLocation(gismodel.Model):
+class UserLocation(models.Model):
     """Model to store user's current location"""
-    location = models.PointField(
-        srid=4326,  # Using WGS84 coordinate system (standard for GPS)
+    location = models.CharField(
+        max_length=255,
         null=True,
         blank=True,
-        help_text="Geographic location (longitude, latitude)"
+        help_text="Geographic location in 'latitude,longitude' format"
     )
     location_accuracy = models.FloatField(
         null=True,
@@ -61,26 +58,30 @@ class UserLocation(gismodel.Model):
             return f"Location at {coords[0]:.6f}, {coords[1]:.6f}"
         return "Location not set"
 
-    def update_location(self, latitude, longitude, accuracy=None):
+    def update_location(self, latitude: float, longitude: float, accuracy: Optional[float] = None):
         """Update location with new coordinates"""
         try:
-            self.location = Point(float(longitude), float(latitude), srid=4326)
+            self.location = f"{latitude},{longitude}"
             if accuracy is not None:
                 self.location_accuracy = accuracy
             self.save()
-            logger.info(f"Location updated for user {self.user} to: {self.coordinates} with accuracy {accuracy}")
+            logger.info(f"Location updated for user to: {self.coordinates} with accuracy {accuracy}")
             return True
         except (ValueError, TypeError) as e:
-            logger.error(f"Location update failed for user {self.user}: {e}")
+            logger.error(f"Location update failed: {e}")
             return False
 
     @property
-    def coordinates(self):
+    def coordinates(self) -> Optional[Tuple[float, float]]:
         """Return tuple of (latitude, longitude)"""
         if self.location:
-            return (self.location.y, self.location.x)
+            try:
+                latitude, longitude = map(float, self.location.split(","))
+                return latitude, longitude
+            except ValueError:
+                logger.error(f"Invalid location format: {self.location}")
+                return None
         return None
-
 
 
 
