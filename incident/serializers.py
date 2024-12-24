@@ -5,7 +5,7 @@ from .models import (
 )
 from django.utils import timezone
 from django.db import transaction
-from django.contrib.gis.geos import Point
+# from django.contrib.gis.geos import Point
 from datetime import timedelta
 from cddp.tasks import send_notification_email
 from accounts.models import User
@@ -200,19 +200,19 @@ class IncidentCategorySerializer(serializers.ModelSerializer):
 
 
 
-class IncidentLocationSerializer(serializers.Serializer):
-    latitude = serializers.FloatField(min_value=-90, max_value=90)
-    longitude = serializers.FloatField(min_value=-180, max_value=180)
+# class IncidentLocationSerializer(serializers.Serializer):
+#     latitude = serializers.FloatField(min_value=-90, max_value=90)
+#     longitude = serializers.FloatField(min_value=-180, max_value=180)
 
-    def to_internal_value(self, data):
-        data = super().to_internal_value(data)
-        return Point(data['longitude'], data['latitude'])
+#     def to_internal_value(self, data):
+#         data = super().to_internal_value(data)
+#         return Point(data['longitude'], data['latitude'])
     
 
 
 
 class IncidentSerializer(serializers.ModelSerializer):
-    location = IncidentLocationSerializer()
+    # location = IncidentLocationSerializer()
     category_details = serializers.SerializerMethodField()
     assigned_responders_count = serializers.SerializerMethodField()
     assigned_volunteers_count = serializers.SerializerMethodField()

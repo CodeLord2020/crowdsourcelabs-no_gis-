@@ -1,6 +1,6 @@
 from django.db import models
-from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.geos import Point
+# from django.contrib.gis.db import models as gis_models
+# from django.contrib.gis.geos import Point
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from typing import List, Dict, Any
@@ -52,7 +52,7 @@ class IncidentCategory(models.Model):
 
 
 
-class Incident(gis_models.Model):
+class Incident(models.Model):
     """Core model for tracking incidents and help requests"""
     STATUS_CHOICES = [
         ('REPORTED', 'Reported'),
@@ -77,7 +77,7 @@ class Incident(gis_models.Model):
     description = models.TextField()
     category = models.ForeignKey(IncidentCategory, on_delete=models.PROTECT)
     reporter = models.ForeignKey(Reporter, on_delete=models.PROTECT)
-    location = gis_models.PointField()
+    # location = gis_models.PointField()
     address = models.TextField(blank=True)
     status = models.CharField(
         max_length=20,

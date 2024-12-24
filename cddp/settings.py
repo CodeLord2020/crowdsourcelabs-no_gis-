@@ -70,7 +70,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'cloudinary_storage',
     'cloudinary',
-    'geoip2',
+    # 'geoip2',
 ]
 
 

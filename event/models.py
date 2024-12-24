@@ -4,7 +4,8 @@ from django.db import models
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
-from django.contrib.gis.db import models as gis_models
+from accounts.models import UserLocation
+# from django.contrib.gis.db import models as gis_models
 from django.utils import timezone
 from datetime import timedelta
 from django.core.exceptions import ValidationError
@@ -91,7 +92,7 @@ class Event(models.Model):
     
     # Spatial Information
     location_name = models.CharField(max_length=200)
-    location = gis_models.PointField()
+    # location = gis_models.PointField()
     address = models.TextField()
 
 

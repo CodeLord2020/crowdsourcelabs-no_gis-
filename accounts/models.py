@@ -90,6 +90,7 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     last_name = models.CharField(max_length=100, null=True, blank=True)
     first_name = models.CharField(max_length=100, null=True, blank=True)
+    username = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(_('email address'), unique=True)
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',

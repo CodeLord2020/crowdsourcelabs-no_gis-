@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import EventTag, EventResourceRequirement, EventCategory, Event, EventVolunteer
-from django.contrib.gis.admin import GISModelAdmin
+# from django.contrib.gis.admin import GISModelAdmin
 
 
 @admin.register(EventTag)
@@ -22,7 +22,7 @@ class EventCategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Event)
-class EventAdmin(GISModelAdmin):
+class EventAdmin(admin.ModelAdmin):
     list_display = (
         'title', 'category', 'status', 'priority', 'start_date',
         'end_date', 'min_volunteers', 'max_volunteers', 'current_volunteers',

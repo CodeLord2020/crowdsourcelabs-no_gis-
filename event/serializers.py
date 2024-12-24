@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.contrib.gis.geos import Point
 from django.utils import timezone
 from .models import (
     Event, EventCategory, EventStatus, EventTag, EventResourceRequirement, EventVolunteer
