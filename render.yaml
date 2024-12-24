@@ -7,6 +7,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
+      - key: GDAL_LIBRARY_PATH
+        value: /usr/lib/libgdal.so.30
     buildFilter:
       paths:
         - requirements.txt
