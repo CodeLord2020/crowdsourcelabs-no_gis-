@@ -10,7 +10,7 @@ from typing import List, Tuple, Optional
 from django.core.validators import MinValueValidator, MaxValueValidator
 import logging
 from django.core.exceptions import ValidationError
-from django.contrib.gis.db import models
+# from django.contrib.gis.db import models
 from cloud_resource.models import ProfilePicResource
 from django.utils.crypto import get_random_string
 # Create your models here.
@@ -141,7 +141,7 @@ class User(AbstractUser):
     @property
     def is_online(self) -> bool:
         if self.last_login:
-            return (timezone.now() - self.last_login).seconds < 300
+            return (timezone.now() - self.last_login).seconds < 900
         return False
 
     def get_roles(self) -> List[str]:
