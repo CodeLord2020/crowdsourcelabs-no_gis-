@@ -1,19 +1,16 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from .models import User, Role, UserRole, UserLocation
-from django.contrib.gis.db import models as gis_models
 from django.utils.html import format_html
-from django.contrib.gis.admin import GISModelAdmin 
 
 
-class UserLocationAdmin(GISModelAdmin):
-    """Admin configuration for UserLocation with map and device info."""
+class UserLocationAdmin(admin.ModelAdmin):
+    """Admin configuration for UserLocation without GIS features."""
     list_display = ('user', 'location_display', 'location_accuracy', 'location_updated_at', 'device_info_summary')
     list_filter = ('location_updated_at',)
     search_fields = ('user__email', 'address')
     ordering = ['-location_updated_at']
     readonly_fields = ('location_display', 'location_updated_at', 'device_info_summary')
-    map_template = 'gis/admin/openlayers.html'  # Map view for location fields
 
     def location_display(self, obj):
         """Display location coordinates."""
@@ -40,33 +37,29 @@ class UserLocationAdmin(GISModelAdmin):
         }),
     )
 
-# Register the model with custom admin class
-admin.site.register(UserLocation, UserLocationAdmin)
-
 
 class UserRoleInline(admin.TabularInline):
-    """Inline for managing roles assigned to a user"""
+    """Inline for managing roles assigned to a user."""
     model = UserRole
     extra = 1
     autocomplete_fields = ['role']
     fk_name = "user"
-    fields = ('role', 'is_active', 'assigned_at') 
+    fields = ('role', 'is_active', 'assigned_at')
     readonly_fields = ('assigned_at',)
     verbose_name = _('User Role Assignment')
     verbose_name_plural = _('User Role Assignments')
 
 
 class UserRoleAssignedByInline(admin.TabularInline):
-    """Inline for managing roles assigned by a user"""
+    """Inline for managing roles assigned by a user."""
     model = UserRole
     fk_name = "assigned_by"
     extra = 1
     autocomplete_fields = ['role']
-    fields = ('assigned_by', 'role', 'is_active', 'assigned_at')  
+    fields = ('assigned_by', 'role', 'is_active', 'assigned_at')
     readonly_fields = ('assigned_at',)
     verbose_name = _('Role Assigned By')
     verbose_name_plural = _('Roles Assigned By')
-
 
 
 @admin.register(User)
@@ -79,7 +72,7 @@ class UserAdmin(admin.ModelAdmin):
     readonly_fields = ('verification_token', 'last_active', 'is_online')
     fieldsets = (
         (None, {
-            'fields': ('email', 'first_name', 'last_name', 'username','password')
+            'fields': ('email', 'first_name', 'last_name', 'username', 'password')
         }),
         (_('Personal Info'), {
             'fields': ('phone_number', 'date_of_birth', 'bio', 'profile_picture', 'emergency_contact', 'emergency_phone')
@@ -90,7 +83,6 @@ class UserAdmin(admin.ModelAdmin):
         (_('Verification'), {
             'fields': ('verification_token',)
         }),
-
     )
     inlines = [UserRoleInline, UserRoleAssignedByInline]
 
@@ -138,3 +130,7 @@ class UserRoleAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """Optimize queryset for better performance with select_related."""
         return super().get_queryset(request).select_related('user', 'role', 'assigned_by')
+
+
+# Register the model with custom admin class
+admin.site.register(UserLocation, UserLocationAdmin)
