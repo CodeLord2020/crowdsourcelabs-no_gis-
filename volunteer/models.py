@@ -66,7 +66,7 @@ class Volunteer(models.Model):
             ('EXPERT', 'Expert')
         ]
     )
-    preferred_location = models.PointField(null=True)
+    # preferred_location = models.PointField(null=True)
     max_travel_distance = models.IntegerField(default=10)  # in kilometers
     verified_hours = models.IntegerField(default=0)
     rating = models.FloatField(default=0.0)

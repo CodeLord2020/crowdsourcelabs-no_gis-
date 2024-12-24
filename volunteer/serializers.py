@@ -66,14 +66,14 @@ class VolunteerSerializer(serializers.ModelSerializer):
     ratings = VolunteerRatingSerializer(source='volunteerrating_set', many=True, read_only=True)
     average_rating = serializers.FloatField(read_only=True)
     total_ratings = serializers.IntegerField(read_only=True)
-    preferred_location = serializers.SerializerMethodField()
+    # preferred_location = serializers.SerializerMethodField()
     latitude = serializers.FloatField(write_only=True, required=False)
     longitude = serializers.FloatField(write_only=True, required=False)
 
     class Meta:
         model = Volunteer
         fields = ['id', 'user', 'skills', 'availability', 'experience_level',
-                 'preferred_location', 'latitude', 'longitude', 'max_travel_distance', 
+                 'latitude', 'longitude', 'max_travel_distance', 
                  'verified_hours', 'rating', 'is_available', 'ratings', 
                  'average_rating', 'total_ratings']
         read_only_fields = ['created_at', 'updated_at', 'verified_hours', 'rating']
@@ -103,14 +103,14 @@ class VolunteerSerializer(serializers.ModelSerializer):
     #         }
     #     return None
     
-    def get_preferred_location(self, obj):
-        """Convert PointField to lat/lng dict"""
-        if obj.preferred_location:
-            return {
-                'latitude': obj.preferred_location.y,
-                'longitude': obj.preferred_location.x
-            }
-        return None
+    # def get_preferred_location(self, obj):
+    #     """Convert PointField to lat/lng dict"""
+    #     if obj.preferred_location:
+    #         return {
+    #             'latitude': obj.preferred_location.y,
+    #             'longitude': obj.preferred_location.x
+    #         }
+    #     return None
 
     def validate_availability(self, value):
         required_keys = ['weekday', 'weekend', 'emergency']
@@ -126,10 +126,10 @@ class VolunteerSerializer(serializers.ModelSerializer):
         latitude = validated_data.pop('latitude', None)
         longitude = validated_data.pop('longitude', None)
 
-        if latitude is not None and longitude is not None:
-            validated_data['preferred_location'] = Point(
-                longitude, latitude, srid=4326
-            )
+        # if latitude is not None and longitude is not None:
+        #     validated_data['preferred_location'] = Point(
+        #         longitude, latitude, srid=4326
+        #     )
 
         volunteer = Volunteer.objects.create(**validated_data)
 
@@ -156,10 +156,10 @@ class VolunteerSerializer(serializers.ModelSerializer):
         latitude = validated_data.pop('latitude', None)
         longitude = validated_data.pop('longitude', None)
 
-        if latitude is not None and longitude is not None:
-            validated_data['preferred_location'] = Point(
-                longitude, latitude, srid=4326
-            )
+        # if latitude is not None and longitude is not None:
+        #     validated_data['preferred_location'] = Point(
+        #         longitude, latitude, srid=4326
+        #     )
 
         # Update volunteer instance
         for attr, value in validated_data.items():
