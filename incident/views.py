@@ -5,7 +5,7 @@ from .models import ( Incident, IncidentAssignment,
 from .filters import TaskFilter, IncidentVolunteerFilter, IncidentAssignmentFilter, IncidentFilter, IncidentResourceFilter
 from .serializers import (TaskSerializer, IncidentSerializer, IncidentResourceSerializer,
                           IncidentAssignmentSerializer, IncidentUpdateSerializer,
-                          IncidentLocationSerializer, IncidentCategorySerializer)
+                         IncidentCategorySerializer)
 from rest_framework import viewsets, filters, status
 from django_filters.rest_framework import DjangoFilterBackend
 from accounts.permissions import AdminPermission, ResponderPermission, VolunteerPermission, ReporterPermission
