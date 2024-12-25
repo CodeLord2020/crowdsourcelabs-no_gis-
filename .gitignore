@@ -2,3 +2,4 @@
 migrations/
 render.yaml
 build.sh
+geoip/
