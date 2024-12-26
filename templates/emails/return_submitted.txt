@@ -1,0 +1,14 @@
+Resource Return Submitted
+
+Resource: {{ resource.resource.name }}
+Incident: "{{ resource.incident.title }}"
+
+{{ submitter.get_full_name }} has submitted a return for {{ quantity }} units of this resource.
+
+Please review and verify the return here:
+{{ verification_url }}
+
+For questions, contact the submitter directly.
+
+Thank you,
+Resource Management Team

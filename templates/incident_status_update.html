@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333333;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #4CAF50;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #555555;
+        }
+        .status-update {
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .status-update h3 {
+            color: #333333;
+            font-size: 20px;
+            margin-top: 0;
+        }
+        .status-update p {
+            font-size: 15px;
+            margin: 5px 0;
+        }
+        .incident-info {
+            background-color: #e0f7fa;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            color: #00796b;
+        }
+        .thank-you {
+            font-size: 16px;
+            color: #4CAF50;
+            text-align: center;
+            margin-top: 30px;
+            font-weight: bold;
+        }
+        .footer {
+            font-size: 14px;
+            color: #888888;
+            text-align: center;
+            margin-top: 20px;
+            border-top: 1px solid #eeeeee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>📢 Incident Status Update</h2>
+    
+    <p>Hello,</p>
+    
+    <p>We wanted to inform you about an important update regarding the incident you’re involved with.</p>
+    
+    <div class="status-update">
+        <h3>Incident: {{ incident_title }}</h3>
+        <p><strong>Status Change:</strong> {{ previous_status }} ➔ {{ new_status }}</p>
+        <p><strong>Priority:</strong> {{ incident_priority }}</p>
+        
+        <div class="incident-info">
+            <p><strong>Location:</strong> {{ location }}</p>
+            <p><strong>Category:</strong> {{ category }}</p>
+            <p><strong>Last Updated:</strong> {{ updated_at }}</p>
+        </div>
+
+        <p>{{ status_message }}</p>
+    </div>
+    
+    <p class="thank-you">🙏 Thank you for your cooperation and ongoing commitment to the response effort.</p>
+    
+    <div class="footer">
+        <p>Best regards,<br>
+        🌟 Your Community Response Team</p>
+    </div>
+</body>
+</html>

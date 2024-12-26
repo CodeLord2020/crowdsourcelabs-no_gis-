@@ -1,0 +1,17 @@
+Resource Allocation Notification
+
+Resource: {{ resource.resource.name }}
+Incident: "{{ incident.title }}"
+
+The following resource has been allocated to your request:
+- Quantity Allocated: {{ quantity }}
+- Allocated By: {{ allocator.get_full_name }}
+- Expected Return Date: {{ expected_return_date|date:"F j, Y" }}
+
+For more details, please visit your dashboard:
+{{ dashboard_url }}
+
+For any questions, please contact {{ allocator.get_full_name }}.
+
+Thank you,
+Resource Management Team

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .header {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .details {
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="header">Overdue Resource Return</h1>
+        <p><strong>Resource:</strong> {{ resource.resource.name }}</p>
+        <p><strong>Incident:</strong> "{{ incident.title }}"</p>
+        
+        <div class="details">
+            <p>This resource was due to be returned <strong>{{ days_overdue }} days ago</strong>. Please review the details below:</p>
+            <ul>
+                <li><strong>Quantity Allocated:</strong> {{ resource.quantity_allocated }}</li>
+                <li><strong>Due Date:</strong> {{ resource.expected_return_date|date:"F j, Y" }}</li>
+                <li><strong>Days Overdue:</strong> {{ days_overdue }}</li>
+            </ul>
+        </div>
+        
+        <p>To complete your return, please use the link below:</p>
+        <a href="{{ return_url }}" class="button">Submit Return</a>
+
+        <p class="footer">If you've already returned this resource, or if you need an extension, please reach out to {{ resource.allocated_by.get_full_name }} for assistance.</p>
+    </div>
+</body>
+</html>

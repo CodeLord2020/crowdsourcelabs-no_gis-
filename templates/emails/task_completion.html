@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9fb;
+            color: #333333;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #4CAF50;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #555555;
+        }
+        .completion-notice {
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .completion-notice h3 {
+            color: #333333;
+            font-size: 20px;
+            margin-top: 0;
+        }
+        .task-info {
+            background-color: #e0f7fa;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            color: #00796b;
+        }
+        .volunteers-list {
+            margin-top: 10px;
+        }
+        .volunteers-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .volunteers-list li {
+            font-size: 15px;
+            color: #555555;
+        }
+        .thank-you {
+            font-size: 16px;
+            color: #4CAF50;
+            text-align: center;
+            margin-top: 30px;
+            font-weight: bold;
+        }
+        .footer {
+            font-size: 14px;
+            color: #888888;
+            text-align: center;
+            margin-top: 20px;
+            border-top: 1px solid #eeeeee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>🎉 Task Completion Notification</h2>
+    
+    <p>Hello,</p>
+    
+    <p>We’re pleased to inform you that the following task has been successfully completed:</p>
+    
+    <div class="completion-notice">
+        <h3>Task: {{ task_title }}</h3>
+        {% if incident_title %}
+        <p><strong>Related Incident:</strong> {{ incident_title }}</p>
+        {% endif %}
+        <p><strong>Completion Time:</strong> {{ completion_time }}</p>
+
+        <div class="volunteers-list">
+            <h4>Volunteers Involved:</h4>
+            <ul>
+                {% for volunteer in volunteers %}
+                <li>👤 {{ volunteer }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    <p class="thank-you">🌟 Thank you to everyone who contributed to this task’s successful completion!</p>
+    
+    <div class="footer">
+        <p>Best regards,<br>
+        🌟 Your Community Response Team</p>
+    </div>
+</body>
+</html>
