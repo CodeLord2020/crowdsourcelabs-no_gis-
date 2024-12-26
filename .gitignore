@@ -4,3 +4,4 @@ render.yaml
 build.sh
 geoip/
 db.sqlite3
+geoip
